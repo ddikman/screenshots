@@ -26,6 +26,7 @@ const kIosCIBuildEnvVars = [
   'SSH_SERVER_PORT'
 ];
 const kAWSCredentialsEnvVars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'];
+const kFlutterVersionEnvVar = 'FLUTTER_VERSION';
 
 // substitute names
 const kAppIdentifier = 'APP_IDENTIFIER';
@@ -42,8 +43,11 @@ Future<void> unpackResources(String tmpDir, bool isIosPoolTypeActive,
   await writeFileImage(await readResourceImage(kAppiumTemplateZip),
       '$tmpDir/$kAppiumTemplateZip');
 
+  // load environment flutter version
+  final testSpecEnvVars = getTestSpecSubstitutions();
+
   // unpack Appium test spec
-  await unpackFile(kAppiumTestSpecName, tmpDir);
+  await unpackFile(kAppiumTestSpecName, tmpDir, nameVals: testSpecEnvVars);
 
   // unpack scripts
   await unpackScripts(tmpDir);
@@ -137,4 +141,13 @@ String getIosAppIdentifier(String appDir) {
   final regExp = 'PRODUCT_BUNDLE_IDENTIFIER = (.*);';
   final iOSConfigStr = fs.file(kIosConfigPath).readAsStringSync();
   return RegExp(regExp).firstMatch(iOSConfigStr)[1];
+}
+
+/// Gets environment substitution variables for the appium test spec
+Map getTestSpecSubstitutions() {
+  const defaultVersion = 'v1.12.13+hotfix.8-stable';
+  final flutterVersion = platform.environment[kFlutterVersionEnvVar] ?? defaultVersion;
+  return {
+    'FLUTTER_VERSION': flutterVersion
+  };
 }
